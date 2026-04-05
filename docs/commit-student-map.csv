@@ -1,0 +1,32 @@
+commit_hash,commit_subject,module_tag,student_name,it_number,module,date
+1d7ca3e52067837359d92f7ffa150e47d785077b,"feat(mobile): display uploaded image previews and open PDF attachments",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 20:01:10 +0530
+81e9b48ce966fdcb9a4cdccfe77abaa83402c211,"docs(process): refresh mapping after CRUD selection UX improvements",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:51:01 +0530
+f60ef233c8b43de2ba74e4f12b520b9cbc680849,"feat(mobile): add explicit record selection UX for update and delete flows",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:50:40 +0530
+0a16112b7e56f722890ae000010740d90fa86635,"docs(process): refresh commit mapping after datetimepicker fix",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:36:50 +0530
+a724a90db547d1e2ce6b9455dcf4130cf4725e78,"fix(mobile): pin datetimepicker to Expo SDK 51 compatible version",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:36:29 +0530
+22ab3a393a3447f09f7ce2a0305f8cc45b8f6dae,"docs(process): refresh commit mapping after validation and CRUD rollout",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:32:39 +0530
+3636f4503e0cc9f40a211a5602c973f3e54725c8,"feat(mobile): enforce auth gating, validated inputs, toasts, and full CRUD actions",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:32:30 +0530
+fa55ad64c9ea5093336e3ede70f20ebd073d4be1,"chore(deps): add date-picker and shared validation/toast utilities",deps,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:32:05 +0530
+91db41b89f20f9dbd2af7c260e9d230e5f319b92,"chore(process): add one-command app launcher script",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 19:31:58 +0530
+1a02b39d68fee6026d2a85cb1f76d2eed6b868a6,"docs(process): finalize complete commit ownership mapping coverage",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:49:31 +0530
+b0338daa16352631a5cc6bceb2967afc5ced49f8,"docs(qa): refresh commit mapping after dependency smoke-test fixes",qa,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:48:14 +0530
+734bea1e29a26a15abcc910e269e3591887e287d,"chore(deps): align Expo-compatible versions and upgrade backend multer",deps,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:46:38 +0530
+722f75e0fac3d91bbc565dcfb52b2a71f16fbd34,"docs(process): refresh ownership mapping after RBAC security commit",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:28:56 +0530
+1738505bcc8e86b59e9e9192d428735e24c514f1,"feat(security): enforce role-based access control across private APIs",security,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:28:03 +0530
+ac045978d3e53327859753437a897ec108bec0a4,"docs(process): refresh commit-to-student mapping CSV after frontend form rollout",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:22:48 +0530
+25af7659c68c2ac8e77c0553c6384acfc0da9e73,"feat(sales): add POS create/update form and prescription image picker",sales,Christian Oersted D.J,IT24103119,Sales Handling (Point of Sale),2026-04-01 18:22:31 +0530
+464094a79d673b14f88894ee53a33ffca10b0321,"feat(shop): add order create/update, driver assignment, and proof upload UI",shop,Jayasinghe S.S,IT24102186,Online Shop,2026-04-01 18:22:12 +0530
+8c7b0309c5212ce5800de14ac7c931b42929a1ee,"feat(support): add appointment/ticket create-update forms and report uploads",support,Madumali M.M.N,IT24104122,Customer Support and Appointment Booking,2026-04-01 18:22:03 +0530
+a866393e2c405b982b4a633489a7513170a5073e,"feat(inventory): add stock create/update form and invoice upload picker",inventory,Udarshana W.A.,IT24100126,Inventory Management,2026-04-01 18:21:56 +0530
+6f669bad88721ecdc987c22a0780c5ab22c672f5,"feat(patient): add profile create/update form and consent upload picker",patient,WarnaKulasooriyage J.J.A,IT24103223,Patient Management and Loyalty,2026-04-01 18:21:51 +0530
+9e43ef79a8553a4c67730d6848255e8aab3202a7,"feat(finance): add transaction create/update form with document picker",finance,Helambage H.D.R.W,IT24102279,Finance Tracking and Analytics,2026-04-01 18:21:42 +0530
+92f52859310fc99158ff4f9c44ec23c6a94e8eb2,"refactor(mobile): add shared multipart form-data helper for uploads",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:21:24 +0530
+20a9126e5f2cbd84218d89957af9aecc0723665d,"chore(process): add student ownership map and commit CSV generator",process,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:12:56 +0530
+e56b710e18440b9bc23f7ff774a298adfe55a78f,"feat(mobile): scaffold API-driven React Native screens and navigation",mobile,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:11:13 +0530
+b4d68b8cf390be195f45e6ba9ca996d1b057b973,"feat(sales): create POS sale endpoints and prescription image handling",sales,Christian Oersted D.J,IT24103119,Sales Handling (Point of Sale),2026-04-01 18:11:05 +0530
+02c50b1bfc3765585562537ee52ab96e1d950e06,"feat(shop): implement order lifecycle, driver assignment, and delivery proof upload",shop,Jayasinghe S.S,IT24102186,Online Shop,2026-04-01 18:11:00 +0530
+42f2f50abda7eb67ae61995788e911e789a3e6e6,"feat(support): add appointments and live support ticket APIs with report uploads",support,Madumali M.M.N,IT24104122,Customer Support and Appointment Booking,2026-04-01 18:10:45 +0530
+d6da49fbebd0dd0a302636b43c390a108529db42,"feat(patient): build loyalty-aware patient CRUD and consent upload flow",patient,WarnaKulasooriyage J.J.A,IT24103223,Patient Management and Loyalty,2026-04-01 18:10:39 +0530
+81a881c51b0ed4bc1cd1475e1ba261804000026c,"feat(finance): add transaction APIs, reminders, and document upload support",finance,Helambage H.D.R.W,IT24102279,Finance Tracking and Analytics,2026-04-01 18:10:27 +0530
+cb5fdc87a97cdba650f14f7a485fb1adcc687a42,"feat(inventory): implement CRUD, invoice uploads, and near-expiry alerts",inventory,Udarshana W.A.,IT24100126,Inventory Management,2026-04-01 18:10:16 +0530
+8dda56705f30417176403277bc01e8e486584ee2,"feat(auth): add JWT authentication and secure user model",auth,Team Shared,NA,Authentication and Core Setup,2026-04-01 18:10:11 +0530

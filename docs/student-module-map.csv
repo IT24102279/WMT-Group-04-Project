@@ -1,0 +1,8 @@
+student_name,it_number,module,commit_tag
+Helambage H.D.R.W,IT24102279,Finance Tracking and Analytics,finance
+WarnaKulasooriyage J.J.A,IT24103223,Patient Management and Loyalty,patient
+Udarshana W.A.,IT24100126,Inventory Management,inventory
+Madumali M.M.N,IT24104122,Customer Support and Appointment Booking,support
+Jayasinghe S.S,IT24102186,Online Shop,shop
+Christian Oersted D.J,IT24103119,Sales Handling (Point of Sale),sales
+Team Shared,NA,Authentication and Core Setup,auth|core|mobile|security|deps|qa|process
