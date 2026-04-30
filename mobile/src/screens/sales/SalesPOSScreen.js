@@ -5,7 +5,7 @@ import {
   ShoppingCart, 
   Receipt, 
   Package, 
-  DollarSign, 
+  Banknote, 
   Calendar, 
   Image as ImageIcon,
   Trash2, 
@@ -272,7 +272,7 @@ const SalesPOSScreen = () => {
                   value={form.unitPrice}
                   onChangeText={(v) => updateForm('unitPrice', sanitizeDecimal(v))}
                   keyboardType="decimal-pad"
-                  icon={DollarSign}
+                  icon={Banknote}
                 />
               </View>
               <View style={{ flex: 2 }}>
@@ -282,7 +282,7 @@ const SalesPOSScreen = () => {
                   value={form.total}
                   onChangeText={(v) => updateForm('total', sanitizeDecimal(v))}
                   keyboardType="decimal-pad"
-                  icon={DollarSign}
+                  icon={Banknote}
                 />
               </View>
             </View>

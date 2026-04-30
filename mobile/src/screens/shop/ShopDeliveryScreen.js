@@ -13,7 +13,7 @@ import {
   Image as ImageIcon,
   ChevronRight,
   Info,
-  DollarSign,
+  Banknote,
   Layers
 } from 'lucide-react-native';
 
@@ -234,7 +234,7 @@ const ShopDeliveryScreen = () => {
               <CustomInput label="Description" value={productForm.description} onChangeText={v => updateProductForm('description', v)} icon={Info} multiline />
               <View style={styles.inputRow}>
                 <View style={{ flex: 1 }}>
-                  <CustomInput label="Price" value={productForm.price} onChangeText={v => updateProductForm('price', sanitizeDecimal(v))} icon={DollarSign} keyboardType="decimal-pad" />
+                  <CustomInput label="Price" value={productForm.price} onChangeText={v => updateProductForm('price', sanitizeDecimal(v))} icon={Banknote} keyboardType="decimal-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <CustomInput label="Stock" value={productForm.stock} onChangeText={v => updateProductForm('stock', sanitizeInteger(v))} keyboardType="number-pad" />
@@ -279,7 +279,7 @@ const ShopDeliveryScreen = () => {
                   <CustomInput label="Qty" value={orderForm.quantity} onChangeText={v => updateOrderForm('quantity', sanitizeInteger(v))} keyboardType="number-pad" />
                 </View>
                 <View style={{ flex: 2 }}>
-                  <CustomInput label="Total" value={orderForm.total} onChangeText={v => updateOrderForm('total', sanitizeDecimal(v))} icon={DollarSign} keyboardType="decimal-pad" />
+                  <CustomInput label="Total" value={orderForm.total} onChangeText={v => updateOrderForm('total', sanitizeDecimal(v))} icon={Banknote} keyboardType="decimal-pad" />
                 </View>
               </View>
               <CustomInput label="Status" value={orderForm.status} onChangeText={v => updateOrderForm('status', v)} />
