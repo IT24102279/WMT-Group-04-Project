@@ -1,21 +1,21 @@
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
+const { GridFsStorage } = require('multer-gridfs-storage');
+const path = require('path');
+const { getConnection } = require('../config/db');
 
-const uploadDir = process.env.UPLOAD_DIR || 'uploads';
-const fullUploadPath = path.join(process.cwd(), uploadDir);
-
-if (!fs.existsSync(fullUploadPath)) {
-  fs.mkdirSync(fullUploadPath, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, fullUploadPath);
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
+// Create storage engine
+const storage = new GridFsStorage({
+  url: process.env.MONGODB_URI,
+  options: { useNewUrlParser: true, useUnifiedTopology: true },
+  file: (req, file) => {
+    return new Promise((resolve, reject) => {
+      const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`;
+      const fileInfo = {
+        filename: filename,
+        bucketName: 'uploads' // Collection name in MongoDB
+      };
+      resolve(fileInfo);
+    });
   }
 });
 
@@ -28,17 +28,17 @@ const fileFilter = (req, file, cb) => {
   ];
 
   if (!allowedMimeTypes.includes(file.mimetype)) {
-    return cb(new Error('Only JPG, PNG, and PDF files are allowed'));
+    return cb(new Error('Only JPG, PNG, and PDF files are allowed'), false);
   }
 
-  return cb(null, true);
+  cb(null, true);
 };
 
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: 10 * 1024 * 1024 // 10MB limit for MongoDB free cluster
   }
 });
 
