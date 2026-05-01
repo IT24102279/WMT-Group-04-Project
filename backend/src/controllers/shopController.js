@@ -3,7 +3,7 @@ const ShopProduct = require('../models/ShopProduct');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}/uploads/${fileName}`;
+  return `${baseUrl}/api/files/${fileName}`;
 };
 
 const buildOrderItems = async (items = []) => {

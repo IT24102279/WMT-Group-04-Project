@@ -2,7 +2,7 @@ const Patient = require('../models/Patient');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}/uploads/${fileName}`;
+  return `${baseUrl}/api/files/${fileName}`;
 };
 
 const createPatient = async (req, res, next) => {

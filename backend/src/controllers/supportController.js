@@ -3,41 +3,9 @@ const SupportTicket = require('../models/SupportTicket');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}/api/support/files/${fileName}`;
+  return `${baseUrl}/api/files/${fileName}`;
 };
 
-const getFile = async (req, res, next) => {
-  try {
-    const { filename } = req.params;
-    const { getConnection } = require('../config/db');
-    const mongoose = require('mongoose');
-    const db = getConnection();
-
-    if (!db) {
-      return res.status(500).json({ message: 'Database connection not initialized' });
-    }
-
-    const bucket = new mongoose.mongo.GridFSBucket(db.db, {
-      bucketName: 'uploads'
-    });
-
-    const files = await bucket.find({ filename }).toArray();
-    if (!files || files.length === 0) {
-      return res.status(404).json({ message: 'File not found' });
-    }
-
-    res.set('Content-Type', files[0].contentType);
-    const downloadStream = bucket.openDownloadStreamByName(filename);
-    
-    downloadStream.on('error', (err) => {
-      return res.status(404).json({ message: 'Error retrieving file' });
-    });
-
-    downloadStream.pipe(res);
-  } catch (error) {
-    return next(error);
-  }
-};
 
 const createAppointment = async (req, res, next) => {
   try {
@@ -150,6 +118,5 @@ module.exports = {
   createTicket,
   getTickets,
   updateTicket,
-  deleteTicket,
-  getFile
+  deleteTicket
 };

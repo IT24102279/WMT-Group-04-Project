@@ -2,7 +2,7 @@ const InventoryItem = require('../models/InventoryItem');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}/uploads/${fileName}`;
+  return `${baseUrl}/api/files/${fileName}`;
 };
 
 const createItem = async (req, res, next) => {

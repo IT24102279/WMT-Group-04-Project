@@ -11,12 +11,16 @@ const supportRoutes = require('./routes/supportRoutes');
 const shopRoutes = require('./routes/shopRoutes');
 const salesRoutes = require('./routes/salesRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const fileRoutes = require('./routes/fileRoutes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Legacy support for local uploads, but prioritizing API streaming for GridFS
 app.use('/uploads', express.static(path.join(process.cwd(), process.env.UPLOAD_DIR || 'uploads')));
+app.use('/api/files', fileRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Pharmacy API running' });

@@ -2,7 +2,7 @@ const Transaction = require('../models/Transaction');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}/uploads/${fileName}`;
+  return `${baseUrl}/api/files/${fileName}`;
 };
 
 const isLegacyReminderRecord = (transaction) => {
