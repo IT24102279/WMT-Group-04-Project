@@ -10,6 +10,11 @@
     ],
     "android": {
       "package": "com.anonymous.pharmacymobile"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c4c5561-4846-4c50-ae58-26a07bd687e5"
+      }
     }
   }
 }
