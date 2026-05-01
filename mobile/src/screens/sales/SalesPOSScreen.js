@@ -270,7 +270,7 @@ const SalesPOSScreen = () => {
         data={sales}
         keyExtractor={(item) => item._id}
         renderItem={renderSaleItem}
-        onRefresh={loadSales}
+        onRefresh={loadData}
         refreshing={loading}
         ListHeaderComponent={
           <Card style={styles.formCard}>
