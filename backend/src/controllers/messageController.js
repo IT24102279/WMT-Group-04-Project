@@ -363,17 +363,39 @@ const deleteConversation = async (req, res, next) => {
   try {
     const { partnerId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     if (!partnerId) {
       return res.status(400).json({ message: 'Partner ID is required' });
     }
 
-    const result = await Message.deleteMany({
-      $or: [
-        { senderId: userId, recipientId: partnerId },
-        { senderId: partnerId, recipientId: userId }
-      ]
-    });
+    const isSupportUser = ['admin', 'pharmacist', 'staff'].includes(userRole);
+
+    const mongoose = require('mongoose');
+    const partnerObjectId = new mongoose.Types.ObjectId(partnerId);
+
+    let query;
+    if (isSupportUser) {
+      // For support staff, deleting a conversation with a customer should remove ALL 
+      // messages involving that customer to clear the thread entirely.
+      query = {
+        $or: [
+          { senderId: partnerObjectId },
+          { recipientId: partnerObjectId }
+        ]
+      };
+    } else {
+      // For customers or others, only delete messages where they were a participant
+      query = {
+        $or: [
+          { senderId: userId, recipientId: partnerObjectId },
+          { senderId: partnerObjectId, recipientId: userId }
+        ]
+      };
+    }
+
+    const result = await Message.deleteMany(query);
+    console.log(`[DeleteConversation] User: ${userId} (${userRole}), Partner: ${partnerId}, Query: ${JSON.stringify(query)}, Deleted: ${result.deletedCount}`);
 
     return res.json({
       message: 'Conversation deleted successfully',

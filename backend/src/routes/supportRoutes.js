@@ -10,13 +10,10 @@ const {
   createTicket,
   getTickets,
   updateTicket,
-  deleteTicket,
-  getFile
+  deleteTicket
 } = require('../controllers/supportController');
 
 const router = express.Router();
-
-router.get('/files/:filename', getFile); // Public or semi-public file retrieval
 
 router.get('/appointments', verifyToken, authorizeRoles('admin', 'pharmacist', 'staff', 'customer'), getAppointments);
 router.post('/appointments', verifyToken, authorizeRoles('admin', 'pharmacist', 'staff', 'customer'), createAppointment);

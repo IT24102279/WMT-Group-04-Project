@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { 
   ArrowLeft, 
@@ -112,16 +113,37 @@ const AdminMessagingScreen = () => {
   };
 
   const handleDeleteConversation = async (partnerId) => {
-    try {
-      await deleteConversation(partnerId);
-      await loadConversations();
-      if (selectedConversation?.partnerId === partnerId) {
-        setSelectedConversation(null);
-      }
-      showToast('Chat deleted');
-    } catch (error) {
-      showToast('Delete failed');
-    }
+    const idString = String(partnerId);
+    Alert.alert(
+      'Delete Conversation',
+      'Are you sure you want to delete this entire chat history? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Optimistic update
+              setConversations(prev => prev.filter(c => String(c.partnerId) !== idString));
+              if (selectedConversation?.partnerId === partnerId) {
+                setSelectedConversation(null);
+              }
+              
+              const response = await deleteConversation(idString);
+              console.log('Delete response:', response.data);
+              
+              showToast('Chat deleted');
+              await loadConversations();
+            } catch (error) {
+              console.log('Delete error:', error?.response?.data || error.message);
+              showToast('Delete failed');
+              await loadConversations(); // Revert on failure
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleMarkAsRead = async (conversation) => {
