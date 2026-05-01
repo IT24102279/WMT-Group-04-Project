@@ -458,27 +458,37 @@ const FinanceDashboardScreen = () => {
               style={[styles.transactionCard, selectedTransactionId === item._id && styles.selectedTransaction]}
               onPress={() => preloadTransaction(item)}
             >
-              <View style={[styles.transactionIcon, { backgroundColor: item.type === 'income' ? '#ECFDF5' : '#FEF2F2' }]}>
-                {item.type === 'income' ? (
-                  <TrendingUp size={20} color={COLORS.success} />
-                ) : (
-                  <TrendingDown size={20} color={COLORS.error} />
-                )}
+              <View style={styles.transactionCardContent}>
+                <View style={[styles.transactionIcon, { backgroundColor: item.type === 'income' ? '#ECFDF5' : '#FEF2F2' }]}>
+                  {item.type === 'income' ? (
+                    <TrendingUp size={20} color={COLORS.success} />
+                  ) : (
+                    <TrendingDown size={20} color={COLORS.error} />
+                  )}
+                </View>
+                <View style={styles.transactionMain}>
+                  <Text style={styles.transactionTitle} numberOfLines={1}>
+                    {item.description || 'Transaction'}
+                  </Text>
+                  <Text style={styles.transactionDate}>
+                    {new Date(item.date).toLocaleDateString()} • {item.status.toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.transactionRight}>
+                  <Text style={[styles.transactionAmount, { color: item.type === 'income' ? COLORS.success : COLORS.error }]}>
+                    {item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount, 'LKR')}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.transactionMain}>
-                <Text style={styles.transactionTitle} numberOfLines={1}>
-                  {item.description || 'Transaction'}
-                </Text>
-                <Text style={styles.transactionDate}>
-                  {new Date(item.date).toLocaleDateString()} • {item.status.toUpperCase()}
-                </Text>
-              </View>
-              <View style={styles.transactionRight}>
-                <Text style={[styles.transactionAmount, { color: item.type === 'income' ? COLORS.success : COLORS.error }]}>
-                  {item.type === 'income' ? '+' : '-'}{formatCurrency(item.amount, 'LKR')}
-                </Text>
-                {item.documentUrl && <Paperclip size={14} color={COLORS.primary} />}
-              </View>
+              {item.documentUrl && (
+                <View style={styles.listAttachment}>
+                  <AttachmentPreview 
+                    url={item.documentUrl} 
+                    imageLabel="Receipt Preview"
+                    pdfLabel="View PDF Receipt"
+                  />
+                </View>
+              )}
             </Pressable>
           ))
         )}
@@ -715,13 +725,21 @@ const styles = StyleSheet.create({
     padding: SPACING.xs
   },
   transactionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: SPACING.md,
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.sm,
     ...SHADOWS.light
+  },
+  transactionCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  listAttachment: {
+    marginTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: SPACING.sm,
   },
   selectedTransaction: {
     borderColor: COLORS.primary,

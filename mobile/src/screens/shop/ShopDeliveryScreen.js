@@ -30,6 +30,7 @@ import {
   uploadProofOfDelivery
 } from '../../services/shopService';
 import { hasRequiredValues, sanitizeDecimal, sanitizeInteger } from '../../utils/validation';
+import { generateId } from '../../utils/idGenerator';
 import { showToast } from '../../utils/toast';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS, SHADOWS } from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
@@ -58,7 +59,7 @@ const ShopDeliveryScreen = () => {
   });
 
   const [orderForm, setOrderForm] = useState({
-    customerId: '',
+    customerId: generateId('CUST'),
     itemName: '',
     quantity: '1',
     unitPrice: '0',
@@ -170,7 +171,7 @@ const ShopDeliveryScreen = () => {
   const resetOrderForm = () => {
     setSelectedOrderId('');
     setProofAsset(null);
-    setOrderForm({ customerId: '', itemName: '', quantity: '1', unitPrice: '0', total: '0', status: 'pending', driverId: '' });
+    setOrderForm({ customerId: generateId('CUST'), itemName: '', quantity: '1', unitPrice: '0', total: '0', status: 'pending', driverId: '' });
   };
 
   const preloadProduct = (p) => {
@@ -306,6 +307,15 @@ const ShopDeliveryScreen = () => {
                     <Text style={styles.driverText}>{item.driverId || 'No Driver'}</Text>
                   </View>
                 </View>
+                {item.proofOfDeliveryUrl && (
+                  <View style={styles.orderAttachment}>
+                    <AttachmentPreview 
+                      url={item.proofOfDeliveryUrl} 
+                      imageLabel="Proof of Delivery"
+                      pdfLabel="View PDF Proof"
+                    />
+                  </View>
+                )}
               </Card>
             ))}
           </>
@@ -348,6 +358,12 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 10, fontWeight: '800', color: COLORS.text },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   driverText: { fontSize: 11, color: COLORS.textLight },
+  orderAttachment: {
+    marginTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingTop: SPACING.sm,
+  },
 });
 
 export default ShopDeliveryScreen;

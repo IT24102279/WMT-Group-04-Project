@@ -18,6 +18,7 @@ import {
 import { getSales, createSale, updateSale, deleteSale } from '../../services/salesService';
 import DatePickerField from '../../components/DatePickerField';
 import { hasRequiredValues, sanitizeDecimal, sanitizeInteger } from '../../utils/validation';
+import { generateId } from '../../utils/idGenerator';
 import { showToast } from '../../utils/toast';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS, SHADOWS } from '../../utils/theme';
 import CustomButton from '../../components/CustomButton';
@@ -32,7 +33,7 @@ const SalesPOSScreen = () => {
   const [selectedSaleId, setSelectedSaleId] = useState('');
   const [prescriptionAsset, setPrescriptionAsset] = useState(null);
   const [form, setForm] = useState({
-    transactionId: '',
+    transactionId: generateId('TX'),
     itemName: '',
     quantity: '1',
     unitPrice: '0',
@@ -143,7 +144,7 @@ const SalesPOSScreen = () => {
     setSelectedSaleId('');
     setPrescriptionAsset(null);
     setForm({
-      transactionId: '',
+      transactionId: generateId('TX'),
       itemName: '',
       quantity: '1',
       unitPrice: '0',

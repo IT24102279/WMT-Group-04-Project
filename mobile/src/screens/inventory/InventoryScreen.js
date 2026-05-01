@@ -11,6 +11,7 @@ import {
   deleteInventoryItem
 } from '../../services/inventoryService';
 import { hasRequiredValues, sanitizeInteger } from '../../utils/validation';
+import { generateId } from '../../utils/idGenerator';
 import { showToast } from '../../utils/toast';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS, SHADOWS } from '../../utils/theme';
 import DatePickerField from '../../components/DatePickerField';
@@ -28,7 +29,7 @@ const InventoryScreen = () => {
   const [form, setForm] = useState({
     itemName: '',
     quantity: '',
-    batchNumber: '',
+    batchNumber: generateId('BT'),
     expiryDate: '',
     supplier: ''
   });
@@ -147,7 +148,7 @@ const InventoryScreen = () => {
     setForm({
       itemName: '',
       quantity: '',
-      batchNumber: '',
+      batchNumber: generateId('BT'),
       expiryDate: '',
       supplier: ''
     });
