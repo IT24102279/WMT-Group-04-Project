@@ -81,19 +81,33 @@ const getProductById = async (req, res, next) => {
 
 const updateProduct = async (req, res, next) => {
   try {
-    const updates = req.body;
+    const { id } = req.params;
+    const updates = { ...req.body };
+
+    console.log(`[Product] Updating ${id}:`, updates);
+
     if (req.file) {
       updates.imageUrl = buildFileUrl(req, req.file.filename);
     }
-    const product = await ShopProduct.findByIdAndUpdate(req.params.id, updates, {
+
+    if (updates.price) updates.price = Number(updates.price);
+    if (updates.stock) updates.stock = Number(updates.stock);
+    if (updates.isActive) updates.isActive = updates.isActive === 'true';
+
+    const product = await ShopProduct.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true
     });
+
     if (!product) {
+      console.log(`[Product] Update failed: Product ${id} not found`);
       return res.status(404).json({ message: 'Product not found' });
     }
+
+    console.log(`[Product] Update success: ${id}`);
     return res.json(product);
   } catch (error) {
+    console.error(`[Product] Update error:`, error);
     return next(error);
   }
 };

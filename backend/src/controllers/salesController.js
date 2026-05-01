@@ -7,13 +7,28 @@ const buildFileUrl = (req, fileName) => {
 
 const createSale = async (req, res, next) => {
   try {
-    const payload = req.body;
+    const payload = { ...req.body };
+    console.log(`[Sale] Creating sale:`, payload);
+
+    if (payload.items && typeof payload.items === 'string') {
+      try {
+        payload.items = JSON.parse(payload.items);
+      } catch (e) {
+        console.error('Failed to parse sale items:', e);
+      }
+    }
+
     if (req.file) {
       payload.prescriptionImageUrl = buildFileUrl(req, req.file.filename);
     }
+    
+    if (payload.total) payload.total = Number(payload.total);
+
     const sale = await Sale.create(payload);
+    console.log(`[Sale] Create success: ${sale._id}`);
     return res.status(201).json(sale);
   } catch (error) {
+    console.error(`[Sale] Create error:`, error);
     return next(error);
   }
 };
@@ -41,19 +56,38 @@ const getSaleById = async (req, res, next) => {
 
 const updateSale = async (req, res, next) => {
   try {
-    const updates = req.body;
+    const { id } = req.params;
+    const updates = { ...req.body };
+    console.log(`[Sale] Updating ${id}:`, updates);
+
+    if (updates.items && typeof updates.items === 'string') {
+      try {
+        updates.items = JSON.parse(updates.items);
+      } catch (e) {
+        console.error('Failed to parse sale items in update:', e);
+      }
+    }
+
     if (req.file) {
       updates.prescriptionImageUrl = buildFileUrl(req, req.file.filename);
     }
-    const sale = await Sale.findByIdAndUpdate(req.params.id, updates, {
+
+    if (updates.total) updates.total = Number(updates.total);
+
+    const sale = await Sale.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true
     });
+
     if (!sale) {
+      console.log(`[Sale] Update failed: Sale ${id} not found`);
       return res.status(404).json({ message: 'Sale not found' });
     }
+
+    console.log(`[Sale] Update success: ${id}`);
     return res.json(sale);
   } catch (error) {
+    console.error(`[Sale] Update error:`, error);
     return next(error);
   }
 };

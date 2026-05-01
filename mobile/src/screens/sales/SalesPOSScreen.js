@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, Pressable, Modal, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { 
   ShoppingCart, 
@@ -12,10 +12,14 @@ import {
   Edit3, 
   Plus,
   ChevronRight,
-  Hash
+  Hash,
+  Search,
+  PlusCircle,
+  MinusCircle
 } from 'lucide-react-native';
 
 import { getSales, createSale, updateSale, deleteSale } from '../../services/salesService';
+import { getInventoryItems } from '../../services/inventoryService';
 import DatePickerField from '../../components/DatePickerField';
 import { hasRequiredValues, sanitizeDecimal, sanitizeInteger } from '../../utils/validation';
 import { generateId } from '../../utils/idGenerator';
@@ -32,32 +36,83 @@ const SalesPOSScreen = () => {
   const [submitting, setSubmitting] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState('');
   const [prescriptionAsset, setPrescriptionAsset] = useState(null);
+  const [inventory, setInventory] = useState([]);
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [activeItemIndex, setActiveItemIndex] = useState(null);
+  
   const [form, setForm] = useState({
     transactionId: generateId('TX'),
-    itemName: '',
-    quantity: '1',
-    unitPrice: '0',
+    items: [{ itemName: '', quantity: '1', unitPrice: '0' }],
     total: '0',
     date: new Date().toISOString().split('T')[0]
   });
 
-  const loadSales = async () => {
+  const loadData = async () => {
     setLoading(true);
     try {
-      const response = await getSales();
-      setSales(response.data || []);
+      const [salesRes, inventoryRes] = await Promise.all([
+        getSales(),
+        getInventoryItems()
+      ]);
+      setSales(salesRes.data || []);
+      setInventory(inventoryRes.data || []);
     } catch (error) {
-      showToast('Failed to load sales');
+      showToast('Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadSales();
+    loadData();
   }, []);
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
+  const updateItem = (index, key, value) => {
+    const newItems = [...form.items];
+    newItems[index] = { ...newItems[index], [key]: value };
+    
+    // Auto-calculate total
+    const newTotal = newItems.reduce((sum, item) => {
+      return sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0));
+    }, 0);
+
+    setForm(prev => ({ 
+      ...prev, 
+      items: newItems,
+      total: String(newTotal)
+    }));
+  };
+
+  const addItemRow = () => {
+    setForm(prev => ({
+      ...prev,
+      items: [...prev.items, { itemName: '', quantity: '1', unitPrice: '0' }]
+    }));
+  };
+
+  const removeItemRow = (index) => {
+    if (form.items.length <= 1) return;
+    const newItems = form.items.filter((_, i) => i !== index);
+    const newTotal = newItems.reduce((sum, item) => {
+      return sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0));
+    }, 0);
+
+    setForm(prev => ({ 
+      ...prev, 
+      items: newItems,
+      total: String(newTotal)
+    }));
+  };
+
+  const selectProductForItem = (product) => {
+    if (activeItemIndex === null) return;
+    updateItem(activeItemIndex, 'itemName', product.itemName);
+    updateItem(activeItemIndex, 'unitPrice', String(product.price || 0)); // Assuming price is in inventory
+    setShowProductPicker(false);
+    setActiveItemIndex(null);
+  };
 
   const pickPrescription = async () => {
     try {
@@ -81,30 +136,29 @@ const SalesPOSScreen = () => {
 
   const toSalePayload = () => ({
     transactionId: form.transactionId,
-    items: [
-      {
-        itemName: form.itemName,
-        quantity: Number(form.quantity),
-        unitPrice: Number(form.unitPrice)
-      }
-    ],
+    items: form.items.map(item => ({
+      itemName: item.itemName,
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice)
+    })),
     total: Number(form.total),
     date: form.date || undefined
   });
 
   const handleCreate = async () => {
-    if (!hasRequiredValues(form, ['transactionId', 'itemName', 'quantity', 'unitPrice', 'total', 'date'])) {
-      showToast('Please fill all required fields');
+    const hasItems = form.items.every(item => item.itemName && Number(item.quantity) > 0);
+    if (!form.transactionId || !hasItems || !form.date) {
+      showToast('Please fill all item details');
       return;
     }
     setSubmitting(true);
     try {
       await createSale(toSalePayload(), prescriptionAsset);
       resetForm();
-      await loadSales();
+      await loadData();
       showToast('Sale record created');
     } catch (error) {
-      showToast('Create failed');
+      showToast(error?.response?.data?.message || 'Create failed');
     } finally {
       setSubmitting(false);
     }
@@ -116,10 +170,10 @@ const SalesPOSScreen = () => {
     try {
       await updateSale(selectedSaleId, toSalePayload(), prescriptionAsset);
       resetForm();
-      await loadSales();
+      await loadData();
       showToast('Sale record updated');
     } catch (error) {
-      showToast('Update failed');
+      showToast(error?.response?.data?.message || 'Update failed');
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +185,7 @@ const SalesPOSScreen = () => {
     try {
       await deleteSale(selectedSaleId);
       resetForm();
-      await loadSales();
+      await loadData();
       showToast('Sale record deleted');
     } catch (error) {
       showToast('Delete failed');
@@ -145,9 +199,7 @@ const SalesPOSScreen = () => {
     setPrescriptionAsset(null);
     setForm({
       transactionId: generateId('TX'),
-      itemName: '',
-      quantity: '1',
-      unitPrice: '0',
+      items: [{ itemName: '', quantity: '1', unitPrice: '0' }],
       total: '0',
       date: new Date().toISOString().split('T')[0]
     });
@@ -155,12 +207,13 @@ const SalesPOSScreen = () => {
 
   const preloadSale = (sale) => {
     setSelectedSaleId(sale._id);
-    const firstItem = sale.items?.[0] || {};
     setForm({
       transactionId: sale.transactionId,
-      itemName: firstItem.itemName || '',
-      quantity: String(firstItem.quantity || 1),
-      unitPrice: String(firstItem.unitPrice || 0),
+      items: sale.items.map(item => ({
+        itemName: item.itemName,
+        quantity: String(item.quantity),
+        unitPrice: String(item.unitPrice)
+      })),
       total: String(sale.total || 0),
       date: new Date(sale.date).toISOString().split('T')[0]
     });
@@ -248,43 +301,76 @@ const SalesPOSScreen = () => {
               </View>
             </View>
 
-            <CustomInput
-              label="Product/Item Name"
-              placeholder="e.g. Paracetamol"
-              value={form.itemName}
-              onChangeText={(v) => updateForm('itemName', v)}
-              icon={Package}
-            />
+            <View style={styles.itemsHeader}>
+              <Text style={styles.itemsTitle}>Transaction Items</Text>
+              <Pressable onPress={addItemRow} style={styles.addItemBtn}>
+                <PlusCircle size={20} color={COLORS.primary} />
+                <Text style={styles.addItemText}>Add Row</Text>
+              </Pressable>
+            </View>
 
-            <View style={styles.inputRow}>
-              <View style={{ flex: 1 }}>
-                <CustomInput
-                  label="Qty"
-                  placeholder="1"
-                  value={form.quantity}
-                  onChangeText={(v) => updateForm('quantity', sanitizeInteger(v))}
-                  keyboardType="number-pad"
-                />
+            {form.items.map((item, index) => (
+              <View key={index} style={styles.itemRowContainer}>
+                <View style={styles.itemMainRow}>
+                  <View style={{ flex: 1 }}>
+                    <CustomInput
+                      label={index === 0 ? "Product/Item Name" : ""}
+                      placeholder="Select product..."
+                      value={item.itemName}
+                      onChangeText={(v) => updateItem(index, 'itemName', v)}
+                      icon={Package}
+                      noMargin={index !== 0}
+                    />
+                  </View>
+                  <Pressable 
+                    onPress={() => {
+                      setActiveItemIndex(index);
+                      setShowProductPicker(true);
+                    }} 
+                    style={[styles.searchBtn, { marginTop: index === 0 ? 25 : 0 }]}
+                  >
+                    <Search size={20} color={COLORS.white} />
+                  </Pressable>
+                  {form.items.length > 1 && (
+                    <Pressable 
+                      onPress={() => removeItemRow(index)} 
+                      style={[styles.removeBtn, { marginTop: index === 0 ? 25 : 0 }]}
+                    >
+                      <MinusCircle size={20} color={COLORS.error} />
+                    </Pressable>
+                  )}
+                </View>
+
+                <View style={styles.itemSubRow}>
+                  <View style={{ flex: 1 }}>
+                    <CustomInput
+                      label="Qty"
+                      placeholder="1"
+                      value={item.quantity}
+                      onChangeText={(v) => updateItem(index, 'quantity', sanitizeInteger(v))}
+                      keyboardType="number-pad"
+                      noMargin
+                    />
+                  </View>
+                  <View style={{ flex: 2 }}>
+                    <CustomInput
+                      label="Unit Price"
+                      placeholder="0.00"
+                      value={item.unitPrice}
+                      onChangeText={(v) => updateItem(index, 'unitPrice', sanitizeDecimal(v))}
+                      keyboardType="decimal-pad"
+                      icon={Banknote}
+                      noMargin
+                    />
+                  </View>
+                </View>
               </View>
-              <View style={{ flex: 2 }}>
-                <CustomInput
-                  label="Unit Price"
-                  placeholder="0.00"
-                  value={form.unitPrice}
-                  onChangeText={(v) => updateForm('unitPrice', sanitizeDecimal(v))}
-                  keyboardType="decimal-pad"
-                  icon={Banknote}
-                />
-              </View>
-              <View style={{ flex: 2 }}>
-                <CustomInput
-                  label="Total"
-                  placeholder="0.00"
-                  value={form.total}
-                  onChangeText={(v) => updateForm('total', sanitizeDecimal(v))}
-                  keyboardType="decimal-pad"
-                  icon={Banknote}
-                />
+            ))}
+
+            <View style={styles.totalSection}>
+              <View style={styles.totalBadge}>
+                <Text style={styles.totalLabel}>Grand Total</Text>
+                <Text style={styles.totalValue}>LKR {Number(form.total).toLocaleString()}</Text>
               </View>
             </View>
 
@@ -343,6 +429,47 @@ const SalesPOSScreen = () => {
         }
         contentContainerStyle={styles.listPadding}
       />
+      <Modal
+        visible={showProductPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowProductPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Product</Text>
+              <Pressable onPress={() => setShowProductPicker(false)}>
+                <XCircle size={24} color={COLORS.textLight} />
+              </Pressable>
+            </View>
+            
+            <FlatList
+              data={inventory}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <Pressable 
+                  style={styles.productSelectItem}
+                  onPress={() => selectProductForItem(item)}
+                >
+                  <View style={styles.productSelectInfo}>
+                    <Text style={styles.productSelectName}>{item.itemName}</Text>
+                    <Text style={styles.productSelectStock}>Stock: {item.quantity}</Text>
+                  </View>
+                  <ChevronRight size={18} color={COLORS.primary} />
+                </Pressable>
+              )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Package size={40} color={COLORS.border} />
+                  <Text style={styles.emptyText}>No inventory found</Text>
+                </View>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -366,7 +493,7 @@ const styles = StyleSheet.create({
   },
   listPadding: {
     padding: SPACING.md,
-    paddingBottom: 40,
+    paddingBottom: SPACING.xxl,
   },
   formCard: {
     marginBottom: SPACING.xl,
@@ -468,6 +595,131 @@ const styles = StyleSheet.create({
     right: 12,
     top: '50%',
     marginTop: -10,
+  },
+  itemsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  itemsTitle: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: '700',
+    color: COLORS.textLight,
+    textTransform: 'uppercase',
+  },
+  addItemBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addItemText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  itemRowContainer: {
+    backgroundColor: COLORS.background,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  itemMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  itemSubRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: 8,
+  },
+  searchBtn: {
+    backgroundColor: COLORS.primary,
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  removeBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  totalSection: {
+    marginTop: SPACING.lg,
+    alignItems: 'flex-end',
+  },
+  totalBadge: {
+    backgroundColor: COLORS.primaryLight,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    alignItems: 'flex-end',
+  },
+  totalLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  totalValue: {
+    ...TYPOGRAPHY.h2,
+    color: COLORS.primary,
+    marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: RADIUS.xxl,
+    borderTopRightRadius: RADIUS.xxl,
+    height: '70%',
+    padding: SPACING.lg,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  modalTitle: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.text,
+  },
+  productSelectItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+  },
+  productSelectInfo: {
+    flex: 1,
+  },
+  productSelectName: {
+    ...TYPOGRAPHY.body,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  productSelectStock: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textLight,
+    marginTop: 2,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.border,
   },
   emptyContainer: {
     alignItems: 'center',

@@ -45,23 +45,31 @@ const getItemById = async (req, res, next) => {
 
 const updateItem = async (req, res, next) => {
   try {
-    const updates = req.body;
+    const { id } = req.params;
+    const updates = { ...req.body };
+
+    console.log(`[Inventory] Updating ${id}:`, updates);
 
     if (req.file) {
       updates.invoiceUrl = buildFileUrl(req, req.file.filename);
     }
 
-    const item = await InventoryItem.findByIdAndUpdate(req.params.id, updates, {
+    if (updates.quantity) updates.quantity = Number(updates.quantity);
+
+    const item = await InventoryItem.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true
     });
 
     if (!item) {
+      console.log(`[Inventory] Update failed: Item ${id} not found`);
       return res.status(404).json({ message: 'Inventory item not found' });
     }
 
+    console.log(`[Inventory] Update success: ${id}`);
     return res.json(item);
   } catch (error) {
+    console.error(`[Inventory] Update error:`, error);
     return next(error);
   }
 };

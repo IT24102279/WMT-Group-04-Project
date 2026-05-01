@@ -3,7 +3,11 @@ export const buildMultipartForm = (payload = {}, fileField, fileAsset) => {
 
   Object.entries(payload).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
-      formData.append(key, String(value));
+      if (Array.isArray(value) || typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, String(value));
+      }
     }
   });
 

@@ -12,9 +12,9 @@ const saleItemSchema = new mongoose.Schema(
 const saleSchema = new mongoose.Schema(
   {
     transactionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Transaction',
-      required: true
+      type: String,
+      required: true,
+      trim: true
     },
     items: {
       type: [saleItemSchema],
