@@ -6,6 +6,9 @@ const buildFileUrl = (req, fileName) => {
 };
 
 const isLegacyReminderRecord = (transaction) => {
+  if (transaction.status === 'completed') {
+    return false;
+  }
   if (transaction.isReminder === true) {
     return true;
   }
@@ -17,6 +20,9 @@ const createTransaction = async (req, res, next) => {
     const payload = req.body;
     if (payload.isReminder !== undefined) {
       payload.isReminder = payload.isReminder === true || payload.isReminder === 'true';
+    }
+    if (payload.amount) {
+      payload.amount = Number(payload.amount);
     }
     if (req.file) {
       payload.documentUrl = buildFileUrl(req, req.file.filename);
@@ -52,7 +58,16 @@ const getTransactionById = async (req, res, next) => {
 
 const updateTransaction = async (req, res, next) => {
   try {
-    const updates = req.body;
+    const updates = { ...req.body };
+    console.log(`[Finance] Updating transaction ${req.params.id}:`, updates);
+
+    if (updates.isReminder !== undefined) {
+      updates.isReminder = updates.isReminder === true || updates.isReminder === 'true';
+    }
+    if (updates.amount) {
+      updates.amount = Number(updates.amount);
+    }
+    
     if (req.file) {
       updates.documentUrl = buildFileUrl(req, req.file.filename);
     }
