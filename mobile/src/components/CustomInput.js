@@ -13,33 +13,42 @@ const CustomInput = ({
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const content = (
+    <View style={[
+      styles.inputContainer,
+      isFocused && styles.inputFocused,
+      error && styles.inputError
+    ]}>
+      {Icon && <Icon size={20} color={isFocused ? COLORS.primary : COLORS.textLight} style={styles.icon} />}
+      <TextInput
+        style={styles.input}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        placeholderTextColor={COLORS.textLight}
+        secureTextEntry={secureTextEntry && !showPassword}
+        pointerEvents={props.onPress ? 'none' : 'auto'}
+        {...props}
+      />
+      {secureTextEntry && (
+        <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+          {showPassword ? (
+            <EyeOff size={20} color={COLORS.textLight} />
+          ) : (
+            <Eye size={20} color={COLORS.textLight} />
+          )}
+        </Pressable>
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[
-        styles.inputContainer,
-        isFocused && styles.inputFocused,
-        error && styles.inputError
-      ]}>
-        {Icon && <Icon size={20} color={isFocused ? COLORS.primary : COLORS.textLight} style={styles.icon} />}
-        <TextInput
-          style={styles.input}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholderTextColor={COLORS.textLight}
-          secureTextEntry={secureTextEntry && !showPassword}
-          {...props}
-        />
-        {secureTextEntry && (
-          <Pressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-            {showPassword ? (
-              <EyeOff size={20} color={COLORS.textLight} />
-            ) : (
-              <Eye size={20} color={COLORS.textLight} />
-            )}
-          </Pressable>
-        )}
-      </View>
+      {props.onPress ? (
+        <Pressable onPress={props.onPress}>
+          {content}
+        </Pressable>
+      ) : content}
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );

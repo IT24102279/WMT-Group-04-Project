@@ -124,28 +124,61 @@ const SalesPOSScreen = () => {
   };
 
   const selectProductForItem = (product) => {
-    if (activeItemIndex === null) return;
-    updateItem(activeItemIndex, 'itemName', product.itemName);
-    updateItem(activeItemIndex, 'unitPrice', String(product.price || 150)); // Defaulting to 150 if no price
+    console.log('[POS] Selecting product:', product.itemName, 'for index:', activeItemIndex);
+    if (activeItemIndex === null) {
+      console.warn('[POS] No active item index set');
+      return;
+    }
+    
+    const newItems = [...form.items];
+    newItems[activeItemIndex] = {
+      ...newItems[activeItemIndex],
+      itemName: product.itemName,
+      unitPrice: String(product.price || 150)
+    };
+
     setShowProductPicker(false);
+    calculateTotal(newItems, form.discount);
     setActiveItemIndex(null);
     setSearchQuery('');
   };
 
   const selectPatient = (patient) => {
     setSelectedPatient(patient);
-    const loyaltyDiscount = Math.min(Number(patient.loyaltyPoints || 0), 500); // Cap discount at 500
-    
+    // Don't auto-apply points, let the user decide in the field
     setForm(prev => ({
       ...prev,
       patientId: patient._id,
       patientName: patient.name,
+      discount: '0'
     }));
     
-    calculateTotal(form.items, String(loyaltyDiscount));
+    calculateTotal(form.items, '0');
     setShowPatientPicker(false);
     setSearchQuery('');
-    showToast(`Applied LKR ${loyaltyDiscount} loyalty discount`);
+    showToast(`Patient ${patient.name} selected (${patient.loyaltyPoints} pts available)`);
+  };
+
+  const handlePointsChange = (value) => {
+    const points = Number(sanitizeInteger(value) || 0);
+    const maxPoints = Number(selectedPatient?.loyaltyPoints || 0);
+    
+    // Calculate subtotal
+    const subtotal = form.items.reduce((sum, item) => {
+      return sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0));
+    }, 0);
+
+    if (points > maxPoints) {
+      showToast(`Limit: ${maxPoints} points available`);
+      return;
+    }
+
+    if (points > subtotal) {
+      showToast(`Discount cannot exceed total bill`);
+      return;
+    }
+
+    calculateTotal(form.items, String(points));
   };
 
   const pickPrescription = async () => {
@@ -370,6 +403,10 @@ const SalesPOSScreen = () => {
                       placeholder="Select product..."
                       value={item.itemName}
                       onChangeText={(v) => updateItem(index, 'itemName', v)}
+                      onPress={() => {
+                        setActiveItemIndex(index);
+                        setShowProductPicker(true);
+                      }}
                       icon={Package}
                       noMargin={index !== 0}
                     />
@@ -420,10 +457,28 @@ const SalesPOSScreen = () => {
             ))}
 
             <View style={styles.totalSection}>
+              {selectedPatient && (
+                <View style={styles.loyaltyInputContainer}>
+                  <View style={{ flex: 1 }}>
+                    <CustomInput
+                      label="Points to Use"
+                      placeholder="0"
+                      value={form.discount}
+                      onChangeText={handlePointsChange}
+                      keyboardType="number-pad"
+                      icon={Banknote}
+                      noMargin
+                    />
+                    <Text style={styles.availablePoints}>
+                      Available: {selectedPatient.loyaltyPoints} pts
+                    </Text>
+                  </View>
+                </View>
+              )}
               {Number(form.discount) > 0 && (
                 <View style={styles.discountRow}>
                   <Text style={styles.discountLabel}>Loyalty Discount</Text>
-                  <Text style={styles.discountValue}>- LKR {form.discount}</Text>
+                  <Text style={styles.discountValue}>- LKR {Number(form.discount).toLocaleString()}</Text>
                 </View>
               )}
               <View style={styles.totalBadge}>
@@ -782,7 +837,36 @@ const styles = StyleSheet.create({
   },
   totalSection: {
     marginTop: SPACING.lg,
-    alignItems: 'flex-end',
+  },
+  loyaltyInputContainer: {
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.surface,
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+  },
+  availablePoints: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  discountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  discountLabel: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textLight,
+  },
+  discountValue: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.error,
+    fontWeight: '700',
   },
   totalBadge: {
     backgroundColor: COLORS.primaryLight,
