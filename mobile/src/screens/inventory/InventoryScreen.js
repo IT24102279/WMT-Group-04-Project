@@ -26,6 +26,124 @@ const InventoryScreen = () => {
   const [selectedItemId, setSelectedItemId] = useState('');
   const [invoiceAsset, setInvoiceAsset] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const inventoryHeader = (
+    <View>
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>Inventory Management</Text>
+        <Package size={28} color={COLORS.primary} />
+      </View>
+
+      {nearExpiry.length > 0 && (
+        <Card style={styles.alertCard}>
+          <View style={styles.alertHeader}>
+            <AlertCircle size={20} color={COLORS.error} />
+            <Text style={styles.alertTitle}>Expiry Alerts</Text>
+          </View>
+          <Text style={styles.alertText}>
+            You have {nearExpiry.length} items expiring within 30 days.
+          </Text>
+        </Card>
+      )}
+
+      <Card style={styles.formCard}>
+        <Text style={styles.cardTitle}>
+          {selectedItemId ? 'Update Item' : 'Add New Item'}
+        </Text>
+        <CustomInput 
+          label="Item Name" 
+          placeholder="Aspirin 500mg" 
+          value={form.itemName} 
+          onChangeText={(v) => updateForm('itemName', v)}
+          icon={Package}
+        />
+        <View style={styles.inputRow}>
+          <View style={{ flex: 1 }}>
+            <CustomInput
+              label="Quantity"
+              placeholder="0"
+              value={form.quantity}
+              onChangeText={(v) => updateForm('quantity', sanitizeInteger(v))}
+              keyboardType="number-pad"
+              icon={Search}
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: SPACING.md }}>
+            <CustomInput 
+              label="Batch No" 
+              placeholder="B123" 
+              value={form.batchNumber} 
+              onChangeText={(v) => updateForm('batchNumber', v)}
+              icon={Landmark}
+            />
+          </View>
+        </View>
+        
+        <DatePickerField 
+          label="Expiry Date" 
+          value={form.expiryDate} 
+          onChange={(v) => updateForm('expiryDate', v)} 
+        />
+        
+        <CustomInput 
+          label="Supplier" 
+          placeholder="PharmaDist Corp" 
+          value={form.supplier} 
+          onChangeText={(v) => updateForm('supplier', v)}
+          icon={Landmark}
+        />
+
+        <CustomButton
+          variant="outline"
+          title={invoiceAsset ? invoiceAsset.name : "Attach Medicine Image (Image/PDF)"}
+          onPress={pickInvoice}
+          icon={FilePlus}
+          style={styles.attachButton}
+          textStyle={styles.attachButtonText}
+        />
+
+        <View style={styles.actionGrid}>
+          {!selectedItemId ? (
+            <CustomButton 
+              title="Add to Inventory" 
+              onPress={handleCreate} 
+              loading={isLoading}
+              style={{ flex: 1 }}
+            />
+          ) : (
+            <>
+              <CustomButton 
+                title="Update" 
+                onPress={handleUpdate} 
+                loading={isLoading}
+                style={{ flex: 1 }}
+              />
+              <CustomButton 
+                variant="outline"
+                title="Delete" 
+                onPress={handleDelete} 
+                loading={isLoading}
+                style={[styles.deleteButton, { flex: 1 }]}
+                textStyle={{ color: COLORS.error }}
+                icon={Trash2}
+              />
+            </>
+          )}
+        </View>
+        
+        {selectedItemId && (
+          <CustomButton 
+            variant="ghost" 
+            title="Cancel Editing" 
+            onPress={resetForm} 
+            icon={XCircle}
+          />
+        )}
+      </Card>
+
+      <Text style={styles.sectionTitle}>Stock List</Text>
+    </View>
+  );
   const [form, setForm] = useState({
     itemName: '',
     quantity: '',
@@ -155,120 +273,7 @@ const InventoryScreen = () => {
     setInvoiceAsset(null);
   };
 
-  const renderHeader = () => (
-    <View>
-      <View style={styles.titleContainer}>
-        <Text style={styles.title}>Inventory Management</Text>
-        <Package size={28} color={COLORS.primary} />
-      </View>
-
-      {nearExpiry.length > 0 && (
-        <Card style={styles.alertCard}>
-          <View style={styles.alertHeader}>
-            <AlertCircle size={20} color={COLORS.error} />
-            <Text style={styles.alertTitle}>Expiry Alerts</Text>
-          </View>
-          <Text style={styles.alertText}>
-            You have {nearExpiry.length} items expiring within 30 days.
-          </Text>
-        </Card>
-      )}
-
-      <Card style={styles.formCard}>
-        <Text style={styles.cardTitle}>
-          {selectedItemId ? 'Update Item' : 'Add New Item'}
-        </Text>
-        <CustomInput 
-          label="Item Name" 
-          placeholder="Aspirin 500mg" 
-          value={form.itemName} 
-          onChangeText={(v) => updateForm('itemName', v)}
-          icon={Package}
-        />
-        <View style={styles.inputRow}>
-          <View style={{ flex: 1 }}>
-            <CustomInput
-              label="Quantity"
-              placeholder="0"
-              value={form.quantity}
-              onChangeText={(v) => updateForm('quantity', sanitizeInteger(v))}
-              keyboardType="number-pad"
-              icon={Search}
-            />
-          </View>
-          <View style={{ flex: 1, marginLeft: SPACING.md }}>
-            <CustomInput 
-              label="Batch No" 
-              placeholder="B123" 
-              value={form.batchNumber} 
-              onChangeText={(v) => updateForm('batchNumber', v)}
-              icon={Landmark}
-            />
-          </View>
-        </View>
-        
-        <DatePickerField 
-          label="Expiry Date" 
-          value={form.expiryDate} 
-          onChange={(v) => updateForm('expiryDate', v)} 
-        />
-        
-        <CustomInput 
-          label="Supplier" 
-          placeholder="PharmaDist Corp" 
-          value={form.supplier} 
-          onChangeText={(v) => updateForm('supplier', v)}
-          icon={Landmark}
-        />
-
-        <CustomButton
-          variant="outline"
-          title={invoiceAsset ? invoiceAsset.name : "Attach Invoice (Image/PDF)"}
-          onPress={pickInvoice}
-          icon={FilePlus}
-          style={styles.attachButton}
-          textStyle={styles.attachButtonText}
-        />
-
-        <View style={styles.actionGrid}>
-          {!selectedItemId ? (
-            <CustomButton 
-              title="Add to Inventory" 
-              onPress={handleCreate} 
-              loading={isLoading}
-              style={{ flex: 1 }}
-            />
-          ) : (
-            <>
-              <CustomButton 
-                title="Update" 
-                onPress={handleUpdate} 
-                loading={isLoading}
-                style={{ flex: 1 }}
-              />
-              <CustomButton 
-                variant="outline"
-                title="Delete" 
-                onPress={handleDelete} 
-                loading={isLoading}
-                style={[styles.deleteButton, { flex: 1 }]}
-                textStyle={{ color: COLORS.error }}
-                icon={Trash2}
-              />
-            </>
-          )}
-        </View>
-        
-        {selectedItemId && (
-          <CustomButton 
-            variant="ghost" 
-            title="Cancel Editing" 
-            onPress={resetForm} 
-            icon={XCircle}
-          />
-        )}
       </Card>
-
       <Text style={styles.sectionTitle}>Stock List</Text>
     </View>
   );
@@ -278,7 +283,7 @@ const InventoryScreen = () => {
       <FlatList
         data={items}
         keyExtractor={(item) => item._id}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={inventoryHeader}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <Pressable
