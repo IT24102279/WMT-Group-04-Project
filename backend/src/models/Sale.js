@@ -21,6 +21,15 @@ const saleSchema = new mongoose.Schema(
       required: true,
       validate: [(arr) => arr.length > 0, 'Sale must contain at least one item']
     },
+    patientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Patient',
+      default: null
+    },
+    discount: {
+      type: Number,
+      default: 0
+    },
     total: {
       type: Number,
       required: true,

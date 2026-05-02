@@ -1,4 +1,6 @@
 const Sale = require('../models/Sale');
+const Patient = require('../models/Patient');
+const InventoryItem = require('../models/InventoryItem');
 
 const buildFileUrl = (req, fileName) => {
   const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -23,9 +25,30 @@ const createSale = async (req, res, next) => {
     }
     
     if (payload.total) payload.total = Number(payload.total);
+    if (payload.discount) payload.discount = Number(payload.discount);
 
     const sale = await Sale.create(payload);
     console.log(`[Sale] Create success: ${sale._id}`);
+
+    // Handle Patient Loyalty Points
+    if (payload.patientId && payload.discount > 0) {
+      await Patient.findByIdAndUpdate(payload.patientId, {
+        $inc: { loyaltyPoints: -payload.discount }
+      }).catch(err => console.error('Failed to update patient loyalty points:', err));
+    }
+
+    // Handle Inventory Deduction
+    if (payload.items && Array.isArray(payload.items)) {
+      for (const item of payload.items) {
+        if (item.itemName && item.quantity) {
+          await InventoryItem.findOneAndUpdate(
+            { itemName: item.itemName },
+            { $inc: { quantity: -item.quantity } }
+          ).catch(err => console.error(`Failed to deduct inventory for ${item.itemName}:`, err));
+        }
+      }
+    }
+
     return res.status(201).json(sale);
   } catch (error) {
     console.error(`[Sale] Create error:`, error);
