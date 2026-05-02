@@ -16,7 +16,8 @@ import {
   Search,
   PlusCircle,
   MinusCircle,
-  XCircle
+  XCircle,
+  Users
 } from 'lucide-react-native';
 
 import { getSales, createSale, updateSale, deleteSale } from '../../services/salesService';
