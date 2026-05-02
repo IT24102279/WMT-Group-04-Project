@@ -273,11 +273,6 @@ const InventoryScreen = () => {
     setInvoiceAsset(null);
   };
 
-      </Card>
-      <Text style={styles.sectionTitle}>Stock List</Text>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <FlatList
