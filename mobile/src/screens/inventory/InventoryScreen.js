@@ -37,6 +37,126 @@ const InventoryScreen = () => {
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+
+
+  const loadInventory = async () => {
+    try {
+      setIsLoading(true);
+      const [allItems, nearExpiryItems] = await Promise.all([
+        getInventoryItems(),
+        getNearExpiryItems(30)
+      ]);
+      setItems(allItems.data || []);
+      setNearExpiry(nearExpiryItems.data || []);
+    } catch (error) {
+      console.log('Load inventory failed', error?.response?.data || error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  const pickInvoice = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+        multiple: false
+      });
+      if (!result.canceled && result.assets?.length) {
+        setInvoiceAsset(result.assets[0]);
+      }
+    } catch (error) {
+      showToast('Could not pick document');
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!hasRequiredValues(form, ['itemName', 'quantity', 'batchNumber', 'expiryDate', 'supplier'])) {
+      showToast('All item fields are required');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await createInventoryItem(form, invoiceAsset);
+      setInvoiceAsset(null);
+      resetForm();
+      await loadInventory();
+      showToast('Inventory item created');
+    } catch (error) {
+      showToast(error?.response?.data?.message || 'Create item failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedItemId) {
+      showToast('Select an item first');
+      return;
+    }
+    if (!hasRequiredValues(form, ['itemName', 'quantity', 'batchNumber', 'expiryDate', 'supplier'])) {
+      showToast('All item fields are required');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await updateInventoryItem(selectedItemId, form, invoiceAsset);
+      setInvoiceAsset(null);
+      resetForm();
+      await loadInventory();
+      showToast('Inventory item updated');
+    } catch (error) {
+      showToast(error?.response?.data?.message || 'Update item failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedItemId) {
+      showToast('Select an item first');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      await deleteInventoryItem(selectedItemId);
+      resetForm();
+      await loadInventory();
+      showToast('Inventory item deleted');
+    } catch (error) {
+      showToast(error?.response?.data?.message || 'Delete item failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const preloadItem = (item) => {
+    setSelectedItemId(item._id);
+    setForm({
+      itemName: item.itemName,
+      quantity: String(item.quantity),
+      batchNumber: item.batchNumber,
+      expiryDate: new Date(item.expiryDate).toISOString().slice(0, 10),
+      supplier: item.supplier
+    });
+  };
+
+  const resetForm = () => {
+    setSelectedItemId('');
+    setForm({
+      itemName: '',
+      quantity: '',
+      batchNumber: generateId('BT'),
+      expiryDate: '',
+      supplier: ''
+    });
+    setInvoiceAsset(null);
+  };
+
   const inventoryHeader = (
     <View>
       <View style={styles.titleContainer}>
@@ -154,125 +274,6 @@ const InventoryScreen = () => {
       <Text style={styles.sectionTitle}>Stock List</Text>
     </View>
   );
-
-  const loadInventory = async () => {
-    try {
-      setIsLoading(true);
-      const [allItems, nearExpiryItems] = await Promise.all([
-        getInventoryItems(),
-        getNearExpiryItems(30)
-      ]);
-      setItems(allItems.data || []);
-      setNearExpiry(nearExpiryItems.data || []);
-    } catch (error) {
-      console.log('Load inventory failed', error?.response?.data || error.message);
-    } finally {
-      setIsLoading(true);
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadInventory();
-  }, []);
-
-  const pickInvoice = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*', 'application/pdf'],
-        copyToCacheDirectory: true,
-        multiple: false
-      });
-      if (!result.canceled && result.assets?.length) {
-        setInvoiceAsset(result.assets[0]);
-      }
-    } catch (error) {
-      showToast('Could not pick document');
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!hasRequiredValues(form, ['itemName', 'quantity', 'batchNumber', 'expiryDate', 'supplier'])) {
-      showToast('All item fields are required');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await createInventoryItem(form, invoiceAsset);
-      setInvoiceAsset(null);
-      resetForm();
-      await loadInventory();
-      showToast('Inventory item created');
-    } catch (error) {
-      showToast(error?.response?.data?.message || 'Create item failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!selectedItemId) {
-      showToast('Select an item first');
-      return;
-    }
-    if (!hasRequiredValues(form, ['itemName', 'quantity', 'batchNumber', 'expiryDate', 'supplier'])) {
-      showToast('All item fields are required');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await updateInventoryItem(selectedItemId, form, invoiceAsset);
-      setInvoiceAsset(null);
-      resetForm();
-      await loadInventory();
-      showToast('Inventory item updated');
-    } catch (error) {
-      showToast(error?.response?.data?.message || 'Update item failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedItemId) {
-      showToast('Select an item first');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      await deleteInventoryItem(selectedItemId);
-      resetForm();
-      await loadInventory();
-      showToast('Inventory item deleted');
-    } catch (error) {
-      showToast(error?.response?.data?.message || 'Delete item failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const preloadItem = (item) => {
-    setSelectedItemId(item._id);
-    setForm({
-      itemName: item.itemName,
-      quantity: String(item.quantity),
-      batchNumber: item.batchNumber,
-      expiryDate: new Date(item.expiryDate).toISOString().slice(0, 10),
-      supplier: item.supplier
-    });
-  };
-
-  const resetForm = () => {
-    setSelectedItemId('');
-    setForm({
-      itemName: '',
-      quantity: '',
-      batchNumber: generateId('BT'),
-      expiryDate: '',
-      supplier: ''
-    });
-    setInvoiceAsset(null);
-  };
 
   return (
     <View style={styles.container}>
