@@ -21,6 +21,7 @@ import {
 
 import { getSales, createSale, updateSale, deleteSale } from '../../services/salesService';
 import { getInventoryItems } from '../../services/inventoryService';
+import { getPatients } from '../../services/patientService';
 import DatePickerField from '../../components/DatePickerField';
 import { hasRequiredValues, sanitizeDecimal, sanitizeInteger } from '../../utils/validation';
 import { generateId } from '../../utils/idGenerator';
@@ -38,25 +39,34 @@ const SalesPOSScreen = () => {
   const [selectedSaleId, setSelectedSaleId] = useState('');
   const [prescriptionAsset, setPrescriptionAsset] = useState(null);
   const [inventory, setInventory] = useState([]);
+  const [patients, setPatients] = useState([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
+  const [showPatientPicker, setShowPatientPicker] = useState(false);
   const [activeItemIndex, setActiveItemIndex] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPatient, setSelectedPatient] = useState(null);
   
   const [form, setForm] = useState({
     transactionId: generateId('TX'),
+    patientId: '',
+    patientName: '',
     items: [{ itemName: '', quantity: '1', unitPrice: '0' }],
     total: '0',
+    discount: '0',
     date: new Date().toISOString().split('T')[0]
   });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [salesRes, inventoryRes] = await Promise.all([
+      const [salesRes, inventoryRes, patientRes] = await Promise.all([
         getSales(),
-        getInventoryItems()
+        getInventoryItems(),
+        getPatients()
       ]);
       setSales(salesRes.data || []);
       setInventory(inventoryRes.data || []);
+      setPatients(patientRes.data || []);
     } catch (error) {
       showToast('Failed to load data');
     } finally {
@@ -73,16 +83,21 @@ const SalesPOSScreen = () => {
   const updateItem = (index, key, value) => {
     const newItems = [...form.items];
     newItems[index] = { ...newItems[index], [key]: value };
-    
-    // Auto-calculate total
-    const newTotal = newItems.reduce((sum, item) => {
+    calculateTotal(newItems, form.discount);
+  };
+
+  const calculateTotal = (items, discount = '0') => {
+    const subtotal = items.reduce((sum, item) => {
       return sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0));
     }, 0);
+    
+    const finalTotal = Math.max(0, subtotal - Number(discount));
 
     setForm(prev => ({ 
       ...prev, 
-      items: newItems,
-      total: String(newTotal)
+      items: items,
+      total: String(finalTotal),
+      discount: String(discount)
     }));
   };
 
@@ -110,9 +125,26 @@ const SalesPOSScreen = () => {
   const selectProductForItem = (product) => {
     if (activeItemIndex === null) return;
     updateItem(activeItemIndex, 'itemName', product.itemName);
-    updateItem(activeItemIndex, 'unitPrice', String(product.price || 0)); // Assuming price is in inventory
+    updateItem(activeItemIndex, 'unitPrice', String(product.price || 150)); // Defaulting to 150 if no price
     setShowProductPicker(false);
     setActiveItemIndex(null);
+    setSearchQuery('');
+  };
+
+  const selectPatient = (patient) => {
+    setSelectedPatient(patient);
+    const loyaltyDiscount = Math.min(Number(patient.loyaltyPoints || 0), 500); // Cap discount at 500
+    
+    setForm(prev => ({
+      ...prev,
+      patientId: patient._id,
+      patientName: patient.name,
+    }));
+    
+    calculateTotal(form.items, String(loyaltyDiscount));
+    setShowPatientPicker(false);
+    setSearchQuery('');
+    showToast(`Applied LKR ${loyaltyDiscount} loyalty discount`);
   };
 
   const pickPrescription = async () => {
@@ -137,12 +169,14 @@ const SalesPOSScreen = () => {
 
   const toSalePayload = () => ({
     transactionId: form.transactionId,
+    patientId: form.patientId || undefined,
     items: form.items.map(item => ({
       itemName: item.itemName,
       quantity: Number(item.quantity),
       unitPrice: Number(item.unitPrice)
     })),
     total: Number(form.total),
+    discount: Number(form.discount),
     date: form.date || undefined
   });
 
@@ -198,10 +232,14 @@ const SalesPOSScreen = () => {
   const resetForm = () => {
     setSelectedSaleId('');
     setPrescriptionAsset(null);
+    setSelectedPatient(null);
     setForm({
       transactionId: generateId('TX'),
+      patientId: '',
+      patientName: '',
       items: [{ itemName: '', quantity: '1', unitPrice: '0' }],
       total: '0',
+      discount: '0',
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -285,11 +323,15 @@ const SalesPOSScreen = () => {
             <View style={styles.inputRow}>
               <View style={{ flex: 1.5 }}>
                 <CustomInput
-                  label="Transaction ID"
-                  placeholder="TX-1001"
-                  value={form.transactionId}
-                  onChangeText={(v) => updateForm('transactionId', v)}
-                  icon={Hash}
+                  label="Patient (Optional)"
+                  placeholder="Select patient..."
+                  value={form.patientName}
+                  icon={Users}
+                  editable={false}
+                  onPress={() => {
+                    setSearchQuery('');
+                    setShowPatientPicker(true);
+                  }}
                   noMargin
                 />
               </View>
@@ -301,6 +343,14 @@ const SalesPOSScreen = () => {
                 />
               </View>
             </View>
+
+            <CustomInput
+              label="Transaction ID"
+              placeholder="TX-1001"
+              value={form.transactionId}
+              onChangeText={(v) => updateForm('transactionId', v)}
+              icon={Hash}
+            />
 
             <View style={styles.itemsHeader}>
               <Text style={styles.itemsTitle}>Transaction Items</Text>
@@ -369,6 +419,12 @@ const SalesPOSScreen = () => {
             ))}
 
             <View style={styles.totalSection}>
+              {Number(form.discount) > 0 && (
+                <View style={styles.discountRow}>
+                  <Text style={styles.discountLabel}>Loyalty Discount</Text>
+                  <Text style={styles.discountValue}>- LKR {form.discount}</Text>
+                </View>
+              )}
               <View style={styles.totalBadge}>
                 <Text style={styles.totalLabel}>Grand Total</Text>
                 <Text style={styles.totalValue}>LKR {Number(form.total).toLocaleString()}</Text>
@@ -440,13 +496,25 @@ const SalesPOSScreen = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Product</Text>
-              <Pressable onPress={() => setShowProductPicker(false)}>
+              <Pressable onPress={() => {
+                setShowProductPicker(false);
+                setSearchQuery('');
+              }}>
                 <XCircle size={24} color={COLORS.textLight} />
               </Pressable>
             </View>
             
+            <TextInput
+              style={styles.modalSearchInput}
+              placeholder="Search products..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            
             <FlatList
-              data={inventory}
+              data={inventory.filter(item => 
+                item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
+              )}
               keyExtractor={(item) => item._id}
               renderItem={({ item }) => (
                 <Pressable 
@@ -464,7 +532,62 @@ const SalesPOSScreen = () => {
               ListEmptyComponent={
                 <View style={styles.emptyContainer}>
                   <Package size={40} color={COLORS.border} />
-                  <Text style={styles.emptyText}>No inventory found</Text>
+                  <Text style={styles.emptyText}>No products match search</Text>
+                </View>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showPatientPicker}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPatientPicker(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Patient</Text>
+              <Pressable onPress={() => {
+                setShowPatientPicker(false);
+                setSearchQuery('');
+              }}>
+                <XCircle size={24} color={COLORS.textLight} />
+              </Pressable>
+            </View>
+            
+            <TextInput
+              style={styles.modalSearchInput}
+              placeholder="Search by name or contact..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            
+            <FlatList
+              data={patients.filter(p => 
+                p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                p.contact.includes(searchQuery)
+              )}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <Pressable 
+                  style={styles.productSelectItem}
+                  onPress={() => selectPatient(item)}
+                >
+                  <View style={styles.productSelectInfo}>
+                    <Text style={styles.productSelectName}>{item.name}</Text>
+                    <Text style={styles.productSelectStock}>Loyalty: {item.loyaltyPoints} pts</Text>
+                  </View>
+                  <ChevronRight size={18} color={COLORS.primary} />
+                </Pressable>
+              )}
+              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Users size={40} color={COLORS.border} />
+                  <Text style={styles.emptyText}>No patients match search</Text>
                 </View>
               }
             />
@@ -730,6 +853,32 @@ const styles = StyleSheet.create({
   emptyText: {
     ...TYPOGRAPHY.body,
     color: COLORS.textLight,
+  },
+  modalSearchInput: {
+    backgroundColor: COLORS.background,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...TYPOGRAPHY.body,
+  },
+  discountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
+  discountLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondary,
+    fontWeight: '700',
+  },
+  discountValue: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondary,
+    fontWeight: '800',
   },
 });
 
