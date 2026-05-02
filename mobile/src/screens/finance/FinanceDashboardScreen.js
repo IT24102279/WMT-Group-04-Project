@@ -70,7 +70,8 @@ const FinanceDashboardScreen = () => {
     amount: '',
     date: new Date().toISOString().slice(0, 10),
     description: '',
-    status: 'pending'
+    status: 'pending',
+    isReminder: false
   };
   
   const [form, setForm] = useState(initialForm);
@@ -217,7 +218,8 @@ const FinanceDashboardScreen = () => {
       amount: String(item.amount),
       date: new Date(item.date).toISOString().slice(0, 10),
       description: item.description || '',
-      status: item.status
+      status: item.status,
+      isReminder: item.isReminder || false
     });
   };
 
@@ -370,7 +372,17 @@ const FinanceDashboardScreen = () => {
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
+        <View style={styles.reminderToggleContainer}>
+          <Pressable 
+            style={[styles.reminderToggle, form.isReminder && styles.reminderToggleActive]} 
+            onPress={() => updateForm('isReminder', !form.isReminder)}
+          >
+            <View style={[styles.checkbox, form.isReminder && styles.checkboxChecked]}>
+              {form.isReminder && <CheckCircle size={12} color={COLORS.white} />}
+            </View>
+            <Text style={styles.reminderToggleLabel}>Set as Payment Reminder</Text>
+          </Pressable>
+        </View>
 
         <Pressable style={styles.attachmentButton} onPress={pickDocument}>
           <Paperclip size={20} color={COLORS.primary} />
@@ -412,9 +424,15 @@ const FinanceDashboardScreen = () => {
             <Text style={styles.sectionTitle}>Upcoming Reminders</Text>
           </View>
           
-          {[...paymentReminders, ...checkReminders].map((r) => (
+          {Array.from(new Set([...paymentReminders, ...checkReminders].map(r => r._id)))
+            .map(id => [...paymentReminders, ...checkReminders].find(r => r._id === id))
+            .map((r) => (
             <View key={r._id} style={[styles.reminderCard, r.status === 'overdue' && styles.overdueBorder]}>
               <View style={styles.reminderInfo}>
+                <View style={styles.reminderBadge}>
+                  <Clock size={10} color={COLORS.accent} />
+                  <Text style={styles.reminderBadgeText}>REMINDER</Text>
+                </View>
                 <Text style={styles.reminderDesc}>{r.description || 'Unnamed Reminder'}</Text>
                 <Text style={styles.reminderMeta}>
                   Due: {new Date(r.date).toLocaleDateString()} • {formatCurrency(r.amount, 'LKR')}
@@ -424,14 +442,16 @@ const FinanceDashboardScreen = () => {
                 <Pressable 
                   style={styles.reminderActionButton} 
                   onPress={() => handleStatusUpdate(r._id, 'completed')}
+                  hitSlop={10}
                 >
-                  <CheckCircle size={20} color={COLORS.success} />
+                  <CheckCircle size={22} color={COLORS.success} />
                 </Pressable>
                 <Pressable 
                   style={styles.reminderActionButton} 
                   onPress={() => preloadTransaction(r)}
+                  hitSlop={10}
                 >
-                  <Edit3 size={20} color={COLORS.primary} />
+                  <Edit3 size={22} color={COLORS.primary} />
                 </Pressable>
               </View>
             </View>
@@ -785,6 +805,60 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: SPACING.xs
+  },
+  reminderToggleContainer: {
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md
+  },
+  reminderToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white
+  },
+  reminderToggleActive: {
+    borderColor: COLORS.accent,
+    backgroundColor: '#FFFBEB'
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent
+  },
+  reminderToggleLabel: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: '700',
+    color: COLORS.text
+  },
+  reminderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+    alignSelf: 'flex-start',
+    marginBottom: 4,
+    borderWidth: 0.5,
+    borderColor: COLORS.accent
+  },
+  reminderBadgeText: {
+    fontSize: 8,
+    fontWeight: '800',
+    color: COLORS.accent
   }
 });
 
