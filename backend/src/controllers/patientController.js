@@ -7,7 +7,13 @@ const buildFileUrl = (req, fileName) => {
 
 const createPatient = async (req, res, next) => {
   try {
-    const payload = req.body;
+    const payload = { ...req.body };
+    console.log('[Patient] Creating new profile:', payload);
+
+    if (payload.loyaltyPoints) {
+      payload.loyaltyPoints = Number(payload.loyaltyPoints);
+    }
+
     if (req.file) {
       payload.consentFormUrl = buildFileUrl(req, req.file.filename);
     }
