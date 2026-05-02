@@ -372,6 +372,7 @@ const FinanceDashboardScreen = () => {
               </Text>
             </Pressable>
           ))}
+        </ScrollView>
         <View style={styles.reminderToggleContainer}>
           <Pressable 
             style={[styles.reminderToggle, form.isReminder && styles.reminderToggleActive]} 
