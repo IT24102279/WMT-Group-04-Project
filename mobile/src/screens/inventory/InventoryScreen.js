@@ -27,6 +27,16 @@ const InventoryScreen = () => {
   const [invoiceAsset, setInvoiceAsset] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   
+  const [form, setForm] = useState({
+    itemName: '',
+    quantity: '',
+    batchNumber: generateId('BT'),
+    expiryDate: '',
+    supplier: ''
+  });
+
+  const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+
   const inventoryHeader = (
     <View>
       <View style={styles.titleContainer}>
@@ -144,13 +154,6 @@ const InventoryScreen = () => {
       <Text style={styles.sectionTitle}>Stock List</Text>
     </View>
   );
-  const [form, setForm] = useState({
-    itemName: '',
-    quantity: '',
-    batchNumber: generateId('BT'),
-    expiryDate: '',
-    supplier: ''
-  });
 
   const loadInventory = async () => {
     try {
@@ -172,8 +175,6 @@ const InventoryScreen = () => {
   useEffect(() => {
     loadInventory();
   }, []);
-
-  const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const pickInvoice = async () => {
     try {
