@@ -1,17 +1,22 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { COLORS, RADIUS, SPACING, SHADOWS } from '../utils/theme';
 
-const Card = ({ children, style, variant = 'elevated' }) => {
+const Card = ({ children, style, variant = 'elevated', onPress }) => {
+  const Container = onPress ? Pressable : View;
+  
   return (
-    <View style={[
-      styles.base,
-      variant === 'elevated' && styles.elevated,
-      variant === 'outline' && styles.outline,
-      style
-    ]}>
+    <Container 
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.base,
+        variant === 'elevated' && styles.elevated,
+        variant === 'outline' && styles.outline,
+        style,
+        pressed && onPress && { opacity: 0.8, transform: [{ scale: 0.98 }] }
+      ]}
+    >
       {children}
-    </View>
+    </Container>
   );
 };
 
